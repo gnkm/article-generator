@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 import src.app as app
 
 @pytest.mark.asyncio
@@ -34,23 +34,20 @@ async def test_req_fun_010_topic_input_processing(mock_cl_fixture):
     # モック: セッションにグラフランナブルがあると仮定
     mock_graph_runnable = MagicMock()
     # invoke の戻り値 (Spec生成結果)
-    mock_graph_runnable.invoke.return_value = {
+    mock_graph_runnable.ainvoke = AsyncMock(return_value={
         "phase": "Spec",
         "spec_doc": "# 仕様書ドラフト"
-    }
+    })
     
     # user_session.get("graph") がこのランナブルを返すように設定
     mock_cl_fixture.user_session.get.return_value = mock_graph_runnable
     
     # テスト対象関数呼び出し
-    if hasattr(app, 'main'):
-        await app.main(user_message)
-        
-        # 検証ポイント:
-        # 1. グラフが invoke されたか
-        mock_graph_runnable.invoke.assert_called()
-        
-        # 2. 結果(仕様書)がメッセージとして送信されたか
-        assert mock_cl_fixture.Message.call_count >= 1
-    else:
-        pytest.fail("app.main (on_message handler) is not implemented yet.")
+    await app.main(user_message)
+    
+    # 検証ポイント:
+    # 1. グラフが ainvoke されたか
+    mock_graph_runnable.ainvoke.assert_awaited()
+    
+    # 2. 結果(仕様書)がメッセージとして送信されたか
+    assert mock_cl_fixture.Message.call_count >= 1

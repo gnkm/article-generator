@@ -17,30 +17,31 @@ async def main(message: cl.Message):
     [REQ-FUN-010] トピック入力
     ユーザーからの入力をトピックとしてグラフを実行する。
     """
-    # テスト用: セッションからグラフを取得（モック差し替え可能にするため）
+    # テスト用: セッションからグラフを取得
     graph = cl.user_session.get("graph")
     
-    # グラフ実行 (現状は同期実行。将来的に ainvoke に変更推奨)
-    # 初期入力は topic として扱う
+    # グラフ実行 (非同期)
     inputs = {"topic": message.content}
+    result = await graph.ainvoke(inputs)
     
-    # Run the graph
-    # Note: invoke is synchronous. in a real async app we might want to use ainvoke or run_in_executor
-    result = graph.invoke(inputs)
-    
-    # 結果の表示 (簡易実装)
-    # 最終的な実装では、phaseごとの中間生成物を表示するが、まずはテスト通過のため結果を表示
+    # 結果の表示
     phase = result.get("phase")
-    content = ""
-    if phase == "Spec":
-        content = result.get("spec_doc", "")
-    elif phase == "Structure":
-        content = result.get("structure_doc", "")
-    elif phase == "Writing":
-        content = result.get("final_article", "")
-    elif phase == "Done":
-        content = result.get("final_article", "Done")
-    else:
-        content = str(result)
+    content = _format_response(result)
 
     await cl.Message(content=f"Processed (Phase: {phase}):\n\n{content}").send()
+
+def _format_response(state: dict) -> str:
+    """
+    現在のフェーズに基づいて表示すべきコンテンツを抽出するヘルパー関数。
+    """
+    phase = state.get("phase")
+    if phase == "Spec":
+        return state.get("spec_doc", "")
+    elif phase == "Structure":
+        return state.get("structure_doc", "")
+    elif phase == "Writing":
+        return state.get("final_article", "")
+    elif phase == "Done":
+        return state.get("final_article", "Done")
+    else:
+        return str(state)
