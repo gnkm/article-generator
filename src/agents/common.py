@@ -30,4 +30,21 @@ def run_agent_chain(
     # Standard LangChain usage: prompt elements with {var} need values at invoke time.
     
     chain = prompt | llm | StrOutputParser()
-    return chain.invoke(input_vars)
+    result = chain.invoke(input_vars)
+    return _clean_output(result)
+
+def _clean_output(text: str) -> str:
+    """
+    Remove markdown code blocks fence if present.
+    """
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        # Remove first line (fence + optional language)
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        # Remove last line (fence)
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        return "\n".join(lines).strip()
+    return text
