@@ -1,6 +1,8 @@
 import os
 import tomllib
 from typing import Any, Dict
+from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.toml")
 
@@ -42,3 +44,21 @@ def get_agent_config(agent_name: str) -> Dict[str, Any]:
         merged.update(agent_env_config)
     
     return merged
+
+
+
+def get_llm(agent_name: str) -> ChatOpenAI:
+    """
+    Factory function to create a ChatOpenAI instance for a specific agent.
+    """
+    config = get_agent_config(agent_name)
+    
+    api_key_str = os.environ.get("OPENROUTER_API_KEY")
+    api_key = SecretStr(api_key_str) if api_key_str else None
+    
+    return ChatOpenAI(
+        model=config["llm"],
+        temperature=config["temperature"],
+        api_key=api_key,
+        base_url=config.get("base_url")
+    )
