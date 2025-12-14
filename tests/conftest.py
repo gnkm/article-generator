@@ -31,4 +31,4 @@ def mock_cl_fixture():
     message_instance = AsyncMock()
     mock_cl.Message.return_value = message_instance
     
-    return mock_cl
+    return mock_cl, mock_cl.user_session

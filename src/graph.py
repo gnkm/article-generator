@@ -1,6 +1,7 @@
 from typing import Literal
 from langgraph.graph import StateGraph, END
 from src.state import BlogSessionState
+from langgraph.checkpoint.memory import MemorySaver
 from src.agents.spec import spec_agent_node
 from src.agents.structure import structure_agent_node
 
@@ -91,4 +92,5 @@ workflow.add_edge("structure_agent", "human_review")
 workflow.add_edge("writing_agent", "human_review")
 
 # Compile the graph
-app_graph = workflow.compile()
+memory = MemorySaver()
+app_graph = workflow.compile(checkpointer=memory, interrupt_before=["human_review"])

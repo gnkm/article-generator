@@ -3,51 +3,80 @@ from unittest.mock import MagicMock, AsyncMock
 import src.app as app
 
 @pytest.mark.asyncio
-async def test_req_fun_001_session_start(mock_cl_fixture):
+async def test_app_start(mock_cl_fixture):
     """
-    [REQ-FUN-001] セッション開始
-    - ウェルカムメッセージが表示されること。
-    - セッションにグラフ(または状態)が初期化されること。
+    [REQ-FUN-001] Test session start.
+    Should set graph and thread_id in user_session.
     """
+    mock_cl, mock_user_session = mock_cl_fixture
+    
     await app.start()
     
-    # メッセージ送信の確認
-    assert mock_cl_fixture.Message.called
-    # contentに何か入っているか
-    args, kwargs = mock_cl_fixture.Message.call_args
-    assert "content" in kwargs or len(args) > 0
+    # Check if graph and thread_id are set in session
+    assert mock_user_session.set.call_count >= 2
+    mock_user_session.set.assert_any_call("graph", app.app_graph)
+    # Check thread_id set (value is random UUID so just check key)
+    calls = [args[0] for args, _ in mock_user_session.set.call_args_list]
+    assert "thread_id" in calls
     
-    # sendが呼ばれたか
-    mock_cl_fixture.Message.return_value.send.assert_awaited_once()
+    # Check welcome message
+    assert mock_cl.Message.called
+    assert mock_cl.Message.call_args[1]["content"].startswith("Hello! MABG")
 
 @pytest.mark.asyncio
-async def test_req_fun_010_topic_input_processing(mock_cl_fixture):
+async def test_app_main_flow(mock_cl_fixture):
     """
-    [REQ-FUN-010] トピック入力とグラフ実行
-    - ユーザーからのメッセージを受け取り、グラフを実行するロジック。
-    - まだ実装されていないが、TDDとして期待動作を記述。
+    [REQ-FUN-010] Test main message handler.
+    Should invoke graph.astream and show output.
     """
-    # モック: ユーザー入力メッセージ
-    user_message = MagicMock()
-    user_message.content = "リモートワークの課題"
+    mock_cl, mock_user_session = mock_cl_fixture
     
-    # モック: セッションにグラフランナブルがあると仮定
-    mock_graph_runnable = MagicMock()
-    # invoke の戻り値 (Spec生成結果)
-    mock_graph_runnable.ainvoke = AsyncMock(return_value={
-        "phase": "Spec",
-        "spec_doc": "# 仕様書ドラフト"
-    })
+    # Mock message
+    message = MagicMock()
+    message.content = "Test Topic"
     
-    # user_session.get("graph") がこのランナブルを返すように設定
-    mock_cl_fixture.user_session.get.return_value = mock_graph_runnable
+    # Mock Graph
+    mock_graph = AsyncMock()
+    mock_user_session.get.side_effect = lambda key: mock_graph if key == "graph" else "test-thread-id"
     
-    # テスト対象関数呼び出し
-    await app.main(user_message)
+    # Mock astream (generator)
+    async def mock_astream(*args, **kwargs):
+        yield {"event": "test"}
+    mock_graph.astream = mock_astream
     
-    # 検証ポイント:
-    # 1. グラフが ainvoke されたか
-    mock_graph_runnable.ainvoke.assert_awaited()
+    # Mock get_state (Synchoronous)
+    mock_state_snapshot = MagicMock()
+    mock_state_snapshot.values = {"phase": "Spec", "spec_doc": "Mock Spec"}
+    mock_state_snapshot.next = ("human_review",) # Tuple for interrupt
+    mock_graph.get_state = MagicMock(return_value=mock_state_snapshot)
     
-    # 2. 結果(仕様書)がメッセージとして送信されたか
-    assert mock_cl_fixture.Message.call_count >= 1
+    # Execute
+    await app.main(message)
+    
+    # Assert
+    # Check output message
+    assert mock_cl.Message.call_count >= 1 # Consolidated to 1 (plus DEBUG likely, so >= 1)
+    
+    # Check if actions are displayed
+    last_call = mock_cl.Message.call_args_list[-1]
+    assert "actions" in last_call[1] or last_call[1].get("actions")
+    
+    # Check if actions were created
+    assert mock_cl.Action.call_count >= 2
+    action_calls = mock_cl.Action.call_args_list
+    
+    # Check for approve action
+    approve_called = any(
+        call.kwargs.get("name") == "approve" and 
+        "payload" in call.kwargs
+        for call in action_calls
+    )
+    assert approve_called, "Approve action not created or missing payload"
+    
+    # Check for amend action
+    amend_called = any(
+        call.kwargs.get("name") == "amend" and
+        "payload" in call.kwargs
+        for call in action_calls
+    )
+    assert amend_called, "Amend action not created or missing payload"
