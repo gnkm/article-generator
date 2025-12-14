@@ -1,6 +1,6 @@
 from typing import TypedDict, Optional, Literal
 
-class BlogSessionState(TypedDict):
+class BlogSessionState(TypedDict, total=False):
     """
     [REQ-FUN-001] ワークフロー制御: セッション全体の状態管理
     Z記法の State Space 定義 (Section 6.1) に対応します。
