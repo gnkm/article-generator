@@ -16,8 +16,8 @@ dependencies = [
 [tool.uv]
 dev-dependencies = [
     "lefthook>=2.0.11",
-    "mypy>=1.19.0",
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "ruff>=0.14.9",
+    "mypy==1.13.0",
 ]
