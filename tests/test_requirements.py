@@ -68,26 +68,31 @@ async def test_agent_nodes_output_format():
     
     各エージェントノードが正しいキーを持つ辞書を返すか確認。
     """
-    from src.graph import structure_agent_node, writing_agent_node
-    # spec_agent_node is imported but we will mock it to avoid LLM call
     from unittest.mock import patch
     
     # Spec Agent (Mocked)
-    with patch("src.graph.spec_agent_node") as mock_spec_node:
+    with patch("src.graph.spec_agent_node") as mock_spec_node, \
+         patch("src.graph.structure_agent_node") as mock_struct_node, \
+         patch("src.graph.writing_agent_node") as mock_writing_node:
+        
         mock_spec_node.return_value = {"spec_doc": "Mocked Spec", "phase": "Spec", "user_feedback": None}
+        mock_struct_node.return_value = {"structure_doc": "Mocked Structure", "phase": "Structure", "user_feedback": None}
+        mock_writing_node.return_value = {"final_article": "Mocked Article", "phase": "Writing", "user_feedback": None}
+        
         state = BlogSessionState(topic="test")
-        res = mock_spec_node(state)
-        assert "spec_doc" in res
-        assert res["phase"] == "Spec"
+        
+        # Test Spec Node Mock
+        res_spec = mock_spec_node(state)
+        assert "spec_doc" in res_spec
+        assert res_spec["phase"] == "Spec"
+        
+        # Test Structure Node Mock
+        res_struct = mock_struct_node(state)
+        assert "structure_doc" in res_struct
+        assert res_struct["phase"] == "Structure"
     
-    # Structure Agent
-    state = BlogSessionState(spec_doc="test spec")
-    res = structure_agent_node(state)
-    assert "structure_doc" in res
-    assert res["phase"] == "Structure"
-    
-    # Writing Agent
-    state = BlogSessionState(structure_doc="test structure")
-    res = writing_agent_node(state)
-    assert "final_article" in res
-    assert res["phase"] == "Writing"
+        # Test Writing Node Mock
+        res_writing = mock_writing_node(state)
+        assert "final_article" in res_writing
+        assert res_writing["phase"] == "Writing"
+
