@@ -31,6 +31,7 @@ async def main(message: cl.Message):
     inputs = {"topic": message.content}
     
     # Run the graph until the first interruption
+    # [REQ-PER-001] ローカルレスポンス: 非同期実行(astream/ainvoke)によりUIブロックしない
     async for event in graph.astream(inputs, config, stream_mode="values"):
          # We can stream intermediate outputs if needed, or just wait for finish/interrupt
          pass
@@ -58,6 +59,9 @@ async def _show_output_and_actions(state: dict, next_step: tuple):
         ]
     
     msg_content = f"**Phase: {phase}**\n\n{content}"
+    if phase == "Done":
+        msg_content = f"**記事作成が完了しました**\n\n{content}"
+    
     if actions:
         msg_content += "\n\n(Please review using the buttons below)"
         

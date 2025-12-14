@@ -21,6 +21,7 @@ def structure_agent_node(state: BlogSessionState) -> BlogSessionState:
         return _generate_structure(spec_doc)
 
 def _generate_structure(spec_doc: Optional[str]) -> BlogSessionState:
+    # [REQ-FUN-020] 構成案の生成
     if not spec_doc:
          return {"structure_doc": "Error: Spec is missing.", "phase": "Structure", "user_feedback": None}
 
@@ -38,6 +39,7 @@ def _generate_structure(spec_doc: Optional[str]) -> BlogSessionState:
     }
 
 def _refine_structure(spec_doc: Optional[str], current_structure: str, feedback: str) -> BlogSessionState:
+    # [REQ-FUN-021] 構成案の修正
     updated_structure = run_agent_chain(
         llm=llm,
         system_prompt_name="structure_generator",

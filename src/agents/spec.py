@@ -23,6 +23,7 @@ def spec_agent_node(state: BlogSessionState) -> BlogSessionState:
         return _generate_spec(topic)
 
 def _generate_spec(topic: Optional[str]) -> BlogSessionState:
+    # [REQ-FUN-011] 仕様案の提示
     if not topic:
         return {"spec_doc": "Error: Topic is missing.", "phase": "Spec", "user_feedback": None}
 
@@ -40,6 +41,7 @@ def _generate_spec(topic: Optional[str]) -> BlogSessionState:
     }
 
 def _refine_spec(topic: Optional[str], current_spec: str, feedback: str) -> BlogSessionState:
+    # [REQ-FUN-012] 仕様案の修正
     updated_spec = run_agent_chain(
         llm=llm,
         system_prompt_name="spec_generator",

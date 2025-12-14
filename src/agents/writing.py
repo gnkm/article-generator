@@ -24,6 +24,7 @@ def writing_agent_node(state: BlogSessionState) -> BlogSessionState:
     return {"final_article": new_article, "phase": "Writing", "user_feedback": None}
 
 def _generate_article(spec_doc: str, structure_doc: str) -> str:
+    # [REQ-FUN-030] 記事本文の執筆
     return run_agent_chain(
         llm=llm,
         system_prompt_name="writing_generator",
@@ -32,6 +33,7 @@ def _generate_article(spec_doc: str, structure_doc: str) -> str:
     )
 
 def _refine_article(current_article: str, feedback: str, spec_doc: str, structure_doc: str) -> str:
+    # [REQ-FUN-031] 最終確認・承認（の修正フロー）
     return run_agent_chain(
         llm=llm,
         system_prompt_name="writing_generator",
