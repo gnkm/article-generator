@@ -1,31 +1,6 @@
 import pytest
-from unittest.mock import MagicMock, AsyncMock
-import sys
-
-# src.app をインポートする前に chainlit をモックする
-# これにより @cl.on_chat_start などのデコレータが副作用を起こすのを防ぐ
-mock_cl = MagicMock()
-mock_cl.on_chat_start = lambda f: f
-mock_cl.on_message = lambda f: f
-sys.modules["chainlit"] = mock_cl
-
-# chainlitをモックに差し替えてからappを読み込むため、import順序のルール(E402)を無視する
-import src.app as app  # noqa: E402
-
-@pytest.fixture
-def mock_cl_fixture():
-    # テストごとにモックの状態をリセット
-    mock_cl.reset_mock()
-    
-    # User Session
-    mock_cl.user_session = MagicMock()
-    mock_cl.user_session.get = MagicMock(return_value=None)
-    
-    # Message
-    message_instance = AsyncMock()
-    mock_cl.Message.return_value = message_instance
-    
-    return mock_cl
+from unittest.mock import MagicMock
+import src.app as app
 
 @pytest.mark.asyncio
 async def test_req_fun_001_session_start(mock_cl_fixture):
