@@ -4,18 +4,12 @@ from src.state import BlogSessionState
 from langgraph.checkpoint.memory import MemorySaver
 from src.agents.spec import spec_agent_node
 from src.agents.structure import structure_agent_node
+from src.agents.writing import writing_agent_node
 
 # Placeholder functions for nodes. Actual logic will be implemented in agents/ modules.
 # spec_agent_node is now imported from src.agents.spec
 # structure_agent_node is now imported from src.agents.structure
-
-def writing_agent_node(state: BlogSessionState) -> BlogSessionState:
-    """
-    [REQ-FUN-030] 記事本文の執筆: 構成案に基づいて記事を書く。
-    """
-    # TODO: Implement actual LLM call
-    dummy_article = "# 記事本文\n\nこれは記事の本文です..."
-    return {"final_article": dummy_article, "phase": "Writing", "user_feedback": None}
+# writing_agent_node is now imported from src.agents.writing
 
 def human_review_node(state: BlogSessionState) -> BlogSessionState:
     """
