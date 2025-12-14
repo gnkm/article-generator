@@ -60,5 +60,6 @@ def get_llm(agent_name: str) -> ChatOpenAI:
         model=config["llm"],
         temperature=config["temperature"],
         api_key=api_key,
-        base_url=config.get("base_url")
+        base_url=config.get("base_url"),
+        cache=False # Disable caching to ensures fresh responses
     )
