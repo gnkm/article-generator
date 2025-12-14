@@ -36,13 +36,38 @@ def spec_agent_node(state: BlogSessionState) -> BlogSessionState:
         # Generation flow
         return _generate_spec(topic)
 
+def _load_prompt(prompt_name: str) -> str:
+    """Load a prompt file from the prompts directory."""
+    # Assuming prompts are in the root prompts/ directory
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    prompt_path = os.path.join(project_root, "prompts", f"{prompt_name}.md")
+    
+    if not os.path.exists(prompt_path):
+        raise FileNotFoundError(f"Prompt file not found at {prompt_path}")
+        
+    with open(prompt_path, "r", encoding="utf-8") as f:
+        content = f.read()
+        # Remove frontmatter if present (simple check)
+        if content.startswith("---"):
+            try:
+                # Find second ---
+                second_dash_index = content.find("---", 3)
+                if second_dash_index != -1:
+                    return content[second_dash_index + 3:].strip()
+            except ValueError:
+                pass
+        return content
+
 def _generate_spec(topic: Optional[str]) -> BlogSessionState:
     if not topic:
         return {"spec_doc": "Error: Topic is missing.", "phase": "Spec", "user_feedback": None}
 
+    system_prompt = _load_prompt("spec_generator")
+    
+    # [REQ-FUN-011]
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "あなたはプロのWebライター兼編集者です。与えられたトピックに基づいて、高品質なブログ記事の仕様書（構成案の前段）を作成してください。"),
-        ("user", f"トピック: {topic}\n\n以下の項目を含むMarkdown形式の仕様書を作成してください：\n1. ターゲット読者\n2. 検索意図 (Search Intent)\n3. 狙うSEOキーワード\n4. 記事のゴール（読了後の状態）\n5. 想定文字数")
+        ("system", system_prompt),
+        ("user", f"以下のトピック（または要望）に基づいて、記事要求仕様書を作成してください。\n\nトピック: {topic}")
     ])
     
     chain = prompt | llm | StrOutputParser()
@@ -55,9 +80,12 @@ def _generate_spec(topic: Optional[str]) -> BlogSessionState:
     }
 
 def _refine_spec(topic: Optional[str], current_spec: str, feedback: str) -> BlogSessionState:
+    system_prompt = _load_prompt("spec_generator")
+    
+    # [REQ-FUN-012]
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "あなたはプロのWebライター兼編集者です。ユーザーのフィードバックに基づいて、ブログ記事の仕様書を修正してください。"),
-        ("user", f"トピック: {topic}\n\n現在の仕様書:\n{current_spec}\n\nユーザーからのフィードバック:\n{feedback}\n\nフィードバックを反映して仕様書を書き直してください。Markdown形式で出力してください。")
+        ("system", system_prompt),
+        ("user", f"以下の現在の仕様書とユーザーフィードバックに基づいて、記事要求仕様書を修正・再生成してください。\n\nトピック: {topic}\n\n現在の仕様書:\n{current_spec}\n\nユーザーフィードバック:\n{feedback}")
     ])
 
     chain = prompt | llm | StrOutputParser()
