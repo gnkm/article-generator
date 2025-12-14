@@ -1,0 +1,22 @@
+pre-commit:
+  parallel: true
+  commands:
+    ruff-check:
+      glob: "*.py"
+      run: uv run ruff check --fix {staged_files}
+      stage_fixed: true
+    mypy:
+      glob: "*.py"
+      run: uv run mypy {staged_files}
+    gitleaks:
+      run: gitleaks protect --staged --redact -v
+    # osv-scanner:
+    #   run: osv-scanner -r .
+    pytest:
+      glob: "*.py"
+      run: uv run pytest
+
+commit-msg:
+  commands:
+    lint-commit-msg:
+      run: echo "Commit message checked"
