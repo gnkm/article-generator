@@ -5,6 +5,7 @@ import pytest
 
 # Set dummy API key to prevent OpenAI client initialization error during import
 os.environ["OPENAI_API_KEY"] = "dummy"
+os.environ["OPENROUTER_API_KEY"] = "dummy"
 
 # Global patch for chainlit
 

@@ -1,0 +1,35 @@
+[default]
+# Default LLM settings for all agents
+llm = "openai/gpt-oss-20b"
+temperature = 0.7
+base_url = "https://openrouter.ai/api/v1"
+
+[default.dev]
+llm = "openai/gpt-oss-20b"
+
+[default.prod]
+llm = "openai/gpt-4o-mini"
+# base_url could be different for prod if using OpenAI directly, but here assuming OpenRouter for both or overridden manually
+
+
+[spec_agent]
+# Overrides for Spec Agent (REQ-FUN-011)
+# temperature = 0.7
+
+[spec_agent.dev]
+llm = "openai/gpt-oss-20b"
+
+[spec_agent.prod]
+llm = "openai/gpt-4o"
+
+[structure_agent]
+# Overrides for Structure Agent (REQ-FUN-020)
+temperature = 0.5
+
+[writing_agent]
+# Overrides for Writing Agent (REQ-FUN-030)
+temperature = 0.7
+
+[review_agent]
+# Overrides for logic/review tasks
+temperature = 0.0

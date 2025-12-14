@@ -1,16 +1,24 @@
+import os
 from typing import Optional
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
+from pydantic import SecretStr
 from src.state import BlogSessionState
+from src.config import get_agent_config
 
-# Initialize LLM
-# Model selection: Using "gpt-3.5-turbo" or "gpt-4o" via OpenRouter (requires configuration)
-# For now, default to standard OpenAI chat initialization which will pick up OPENAI_API_KEY/OPENROUTER_API_KEY from env.
-# Note: For OpenRouter, usually need to set base_url="https://openrouter.ai/api/v1" if using default python sdk,
-# or rely on langchain integration. Assuming env vars are set correctly.
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+# Initialize LLM with configuration
+config = get_agent_config("spec_agent")
+api_key_str = os.environ.get("OPENROUTER_API_KEY")
+api_key = SecretStr(api_key_str) if api_key_str else None
+
+llm = ChatOpenAI(
+    model=config["llm"],
+    temperature=config["temperature"],
+    api_key=api_key,
+    base_url=config.get("base_url")
+)
 
 def spec_agent_node(state: BlogSessionState) -> BlogSessionState:
     """
