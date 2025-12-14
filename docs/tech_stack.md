@@ -1,0 +1,21 @@
+# 技術スタック
+
+- 言語: Python 3.13
+- パッケージマネージャー: uv (注意: `uv pip` は禁止。`uv add` を使用する)
+- LLM プロバイダ: OpenRouter
+- フレームワーク・ライブラリ:
+  - Chainlit (UI)
+  - LangChain / LangGraph (Orchestration)
+  - langchain-openai (LLM Provider)
+  - Pydantic (Data Validation)
+  - python-dotenv (Configuration)
+- テスト:
+  - pytest
+  - pytest-asyncio
+- コンテナ: Docker Compose
+- git hooks: lefthook
+  - gitleaks
+  - ruff check
+  - mypy
+  - osv-scanner
+  - pytest
