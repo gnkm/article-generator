@@ -1,6 +1,12 @@
 import sys
+import os
 from unittest.mock import MagicMock, AsyncMock
 import pytest
+
+# Set dummy API key to prevent OpenAI client initialization error during import
+os.environ["OPENAI_API_KEY"] = "dummy"
+
+# Global patch for chainlit
 
 # Global patch for chainlit
 # This applies to all tests and ensures src.app can be imported without a running Chainlit server.

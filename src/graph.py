@@ -1,15 +1,10 @@
 from typing import Literal
 from langgraph.graph import StateGraph, END
 from src.state import BlogSessionState
+from src.agents.spec import spec_agent_node
 
 # Placeholder functions for nodes. Actual logic will be implemented in agents/ modules.
-def spec_agent_node(state: BlogSessionState) -> BlogSessionState:
-    """
-    [REQ-FUN-011] 仕様案の提示: 仕様書を生成または修正する。
-    """
-    # TODO: Implement actual LLM call
-    dummy_spec = f"# 仕様書\n\nトピック: {state.get('topic')}\n..."
-    return {"spec_doc": dummy_spec, "phase": "Spec", "user_feedback": None}
+# spec_agent_node is now imported from src.agents.spec
 
 def structure_agent_node(state: BlogSessionState) -> BlogSessionState:
     """
