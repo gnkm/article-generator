@@ -33,6 +33,10 @@ cd article-generator
 ```bash
 # .env
 OPENROUTER_API_KEY=your_api_key_here
+
+# 環境 (dev / prod)
+# config.toml の [*.dev] または [*.prod] 設定を読み込みます。デフォルトは dev です。
+APP_ENV=dev
 ```
 ※ `src/config.py` および `config.toml` の設定に従います。
 

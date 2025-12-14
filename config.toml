@@ -14,21 +14,33 @@ llm = "openai/gpt-4o-mini"
 
 [spec_agent]
 # Overrides for Spec Agent (REQ-FUN-011)
-# temperature = 0.7
+temperature = 1.0
 
 [spec_agent.dev]
 llm = "openai/gpt-oss-20b"
 
 [spec_agent.prod]
-llm = "openai/gpt-4o"
+llm = "openai/gpt-5.2"
 
 [structure_agent]
 # Overrides for Structure Agent (REQ-FUN-020)
-temperature = 0.5
+temperature = 1.0
+
+[structure_agent.dev]
+llm = "openai/gpt-oss-20b"
+
+[structure_agent.prod]
+llm = "anthropic/claude-opus-4.5"
 
 [writing_agent]
 # Overrides for Writing Agent (REQ-FUN-030)
-temperature = 0.7
+temperature = 1.0
+
+[writing_agent.dev]
+llm = "openai/gpt-oss-20b"
+
+[writing_agent.prod]
+llm = "google/gemini-3-pro-preview"
 
 [review_agent]
 # Overrides for logic/review tasks
