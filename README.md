@@ -38,6 +38,13 @@ OPENROUTER_API_KEY=your_api_key_here
 # config.toml の [*.dev] または [*.prod] 設定を読み込みます。デフォルトは dev です。
 APP_ENV=dev
 ```
+
+設定ファイル (`config.toml`) を用意します。
+
+```bash
+cp config.example.toml config.toml
+```
+
 ※ `src/config.py` および `config.toml` の設定に従います。
 
 ### 3. アプリケーションの起動
