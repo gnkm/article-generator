@@ -1,36 +1,19 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from src.state import BlogSessionState
 from src.agents.writing import writing_agent_node
 
 @pytest.fixture
-def mock_chain_components():
-    with patch("src.agents.writing.llm"), \
-         patch("src.agents.writing.ChatPromptTemplate") as mock_prompt_cls:
-        
-        # Setup Prompt Mock
-        mock_prompt_instance = MagicMock()
-        mock_prompt_cls.from_messages.return_value = mock_prompt_instance
-        
-        # Setup Chain Mock
-        mock_chain = MagicMock()
-        
-        # prompt | llm -> chain (simplified for test since we mock pipe)
-        mock_prompt_instance.__or__.return_value = mock_chain
-        mock_chain.__or__.return_value = mock_chain # parser
-        
-        # Final result invocation
-        mock_chain.invoke.return_value = "# Mock Article\n\nContent..."
-        
-        yield mock_prompt_cls, mock_chain
+def mock_run_agent():
+    with patch("src.agents.writing.run_agent_chain") as mock:
+        mock.return_value = "# Mock Article\n\nContent..."
+        yield mock
 
-def test_writing_agent_generate_flow(mock_chain_components):
+def test_writing_agent_generate_flow(mock_run_agent):
     """
     [REQ-FUN-030] 記事生成フローのテスト
     - フィードバックがない場合、新規生成が行われること
     """
-    mock_prompt_cls, mock_chain = mock_chain_components
-    
     state: BlogSessionState = {
         "spec_doc": "# Spec\n...",
         "structure_doc": "# Structure\n...",
@@ -44,22 +27,17 @@ def test_writing_agent_generate_flow(mock_chain_components):
     assert result["final_article"] == "# Mock Article\n\nContent..."
     assert result["user_feedback"] is None
     
-    # テンプレート作成の検証
-    mock_prompt_cls.from_messages.assert_called_once()
-    
-    # チェーン実行の検証
-    mock_chain.invoke.assert_called_once()
-    args = mock_chain.invoke.call_args[0][0]
-    assert args["spec_doc"] == state["spec_doc"]
-    assert args["structure_doc"] == state["structure_doc"]
+    # Verify call
+    mock_run_agent.assert_called_once()
+    args = mock_run_agent.call_args[1]
+    assert args["input_vars"]["spec_doc"] == state["spec_doc"]
+    assert args["input_vars"]["structure_doc"] == state["structure_doc"]
 
-def test_writing_agent_refine_flow(mock_chain_components):
+def test_writing_agent_refine_flow(mock_run_agent):
     """
     [REQ-FUN-031] 記事修正フローのテスト
     - フィードバックがある場合、修正が行われること
     """
-    mock_prompt_cls, mock_chain = mock_chain_components
-    
     state: BlogSessionState = {
         "spec_doc": "# Spec\n...",
         "structure_doc": "# Structure\n...",
@@ -74,9 +52,8 @@ def test_writing_agent_refine_flow(mock_chain_components):
     assert result["final_article"] == "# Mock Article\n\nContent..."
     assert result["user_feedback"] is None
     
-    mock_prompt_cls.from_messages.assert_called_once()
-    
-    mock_chain.invoke.assert_called_once()
-    args = mock_chain.invoke.call_args[0][0]
-    assert args["current_article"] == state["final_article"]
-    assert args["feedback"] == "Make it longer"
+    # Verify call
+    mock_run_agent.assert_called_once()
+    args = mock_run_agent.call_args[1]
+    assert args["input_vars"]["current_article"] == state["final_article"]
+    assert args["input_vars"]["feedback"] == "Make it longer"

@@ -5,19 +5,13 @@ from src.state import BlogSessionState
 
 
 
-from langchain_core.runnables import RunnableLambda
-
 @pytest.fixture
-def mock_llm_runnable():
-    # モジュールレベルの `llm` を、固定出力を返す単純な Runnable に置き換えます。
-    # これにより LCEL 内部との複雑な互換性問題を回避できます。
-    
-    fake_llm = RunnableLambda(lambda x: "Mocked Spec Content")
-    
-    with patch("src.agents.spec.llm", fake_llm):
-        yield fake_llm
+def mock_run_agent():
+    with patch("src.agents.spec.run_agent_chain") as mock:
+        mock.return_value = "Mocked Spec Content"
+        yield mock
 
-def test_generate_spec_success(mock_llm_runnable):
+def test_generate_spec_success(mock_run_agent):
     """
     仕様書の初期生成をテストします。
     """
@@ -27,6 +21,11 @@ def test_generate_spec_success(mock_llm_runnable):
     assert result["phase"] == "Spec"
     assert result["spec_doc"] == "Mocked Spec Content"
     assert result["user_feedback"] is None
+    
+    # Verify call arguments
+    mock_run_agent.assert_called_once()
+    args = mock_run_agent.call_args[1]
+    assert args["input_vars"]["topic"] == "Remote Work"
 
 def test_generate_spec_no_topic():
     """
@@ -37,7 +36,7 @@ def test_generate_spec_no_topic():
     
     assert "Error" in result["spec_doc"]
 
-def test_refine_spec_flow(mock_llm_runnable):
+def test_refine_spec_flow(mock_run_agent):
     """
     フィードバックがある場合の修正フローをテストします。
     """
@@ -54,3 +53,8 @@ def test_refine_spec_flow(mock_llm_runnable):
     # 状態定義のコメントでは承認時にクリアされるとありましたが、refine_spec がクリアするのは「処理済み」を意味します）
     # 実装を確認すると: `user_feedback: None` が返されています。
     assert result["user_feedback"] is None
+    
+    # Verify call arguments
+    mock_run_agent.assert_called_once()
+    args = mock_run_agent.call_args[1]
+    assert args["input_vars"]["feedback"] == "Add more details"

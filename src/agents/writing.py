@@ -1,8 +1,6 @@
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
 from src.state import BlogSessionState
-from src.utils.prompts import load_prompt
 from src.config import get_llm
+from src.agents.common import run_agent_chain
 
 # Initialize LLM for this agent
 llm = get_llm("writing_agent")
@@ -26,28 +24,22 @@ def writing_agent_node(state: BlogSessionState) -> BlogSessionState:
     return {"final_article": new_article, "phase": "Writing", "user_feedback": None}
 
 def _generate_article(spec_doc: str, structure_doc: str) -> str:
-    system_prompt = load_prompt("writing_generator")
-    
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("human", "Specification:\n{spec_doc}\n\nArticle Structure:\n{structure_doc}\n\nPlease write the article.")
-    ])
-    
-    chain = prompt | llm | StrOutputParser()
-    return chain.invoke({"spec_doc": spec_doc, "structure_doc": structure_doc})
+    return run_agent_chain(
+        llm=llm,
+        system_prompt_name="writing_generator",
+        user_prompt_template="Specification:\n{spec_doc}\n\nArticle Structure:\n{structure_doc}\n\nPlease write the article.",
+        input_vars={"spec_doc": spec_doc, "structure_doc": structure_doc}
+    )
 
 def _refine_article(current_article: str, feedback: str, spec_doc: str, structure_doc: str) -> str:
-    system_prompt = load_prompt("writing_generator")
-    
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("human", "Specification:\n{spec_doc}\n\nArticle Structure:\n{structure_doc}\n\nCurrent Draft:\n{current_article}\n\nUser Feedback:\n{feedback}\n\nPlease revise the article.")
-    ])
-    
-    chain = prompt | llm | StrOutputParser()
-    return chain.invoke({
-        "spec_doc": spec_doc, 
-        "structure_doc": structure_doc,
-        "current_article": current_article,
-        "feedback": feedback
-    })
+    return run_agent_chain(
+        llm=llm,
+        system_prompt_name="writing_generator",
+        user_prompt_template="Specification:\n{spec_doc}\n\nArticle Structure:\n{structure_doc}\n\nCurrent Draft:\n{current_article}\n\nUser Feedback:\n{feedback}\n\nPlease revise the article.",
+        input_vars={
+            "spec_doc": spec_doc,
+            "structure_doc": structure_doc,
+            "current_article": current_article,
+            "feedback": feedback
+        }
+    )

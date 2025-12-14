@@ -1,10 +1,7 @@
 from typing import Optional
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-
 from src.state import BlogSessionState
 from src.config import get_llm
-from src.utils.prompts import load_prompt
+from src.agents.common import run_agent_chain
 
 # Initialize LLM with configuration
 llm = get_llm("spec_agent")
@@ -29,16 +26,12 @@ def _generate_spec(topic: Optional[str]) -> BlogSessionState:
     if not topic:
         return {"spec_doc": "Error: Topic is missing.", "phase": "Spec", "user_feedback": None}
 
-    system_prompt = load_prompt("spec_generator")
-    
-    # [REQ-FUN-011]
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("user", f"以下のトピック（または要望）に基づいて、記事要求仕様書を作成してください。\n\nトピック: {topic}")
-    ])
-    
-    chain = prompt | llm | StrOutputParser()
-    spec_doc = chain.invoke({})
+    spec_doc = run_agent_chain(
+        llm=llm,
+        system_prompt_name="spec_generator",
+        user_prompt_template="以下のトピック（または要望）に基づいて、記事要求仕様書を作成してください。\n\nトピック: {topic}",
+        input_vars={"topic": topic}
+    )
     
     return {
         "spec_doc": spec_doc,
@@ -47,16 +40,16 @@ def _generate_spec(topic: Optional[str]) -> BlogSessionState:
     }
 
 def _refine_spec(topic: Optional[str], current_spec: str, feedback: str) -> BlogSessionState:
-    system_prompt = load_prompt("spec_generator")
-    
-    # [REQ-FUN-012]
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("user", f"以下の現在の仕様書とユーザーフィードバックに基づいて、記事要求仕様書を修正・再生成してください。\n\nトピック: {topic}\n\n現在の仕様書:\n{current_spec}\n\nユーザーフィードバック:\n{feedback}")
-    ])
-
-    chain = prompt | llm | StrOutputParser()
-    updated_spec = chain.invoke({})
+    updated_spec = run_agent_chain(
+        llm=llm,
+        system_prompt_name="spec_generator",
+        user_prompt_template="以下の現在の仕様書とユーザーフィードバックに基づいて、記事要求仕様書を修正・再生成してください。\n\nトピック: {topic}\n\n現在の仕様書:\n{current_spec}\n\nユーザーフィードバック:\n{feedback}",
+        input_vars={
+            "topic": topic,
+            "current_spec": current_spec,
+            "feedback": feedback
+        }
+    )
 
     return {
         "spec_doc": updated_spec,

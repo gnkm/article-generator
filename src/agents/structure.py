@@ -1,10 +1,7 @@
 from typing import Optional
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-
 from src.state import BlogSessionState
 from src.config import get_llm
-from src.utils.prompts import load_prompt
+from src.agents.common import run_agent_chain
 
 # Initialize LLM with configuration
 llm = get_llm("structure_agent")
@@ -27,16 +24,12 @@ def _generate_structure(spec_doc: Optional[str]) -> BlogSessionState:
     if not spec_doc:
          return {"structure_doc": "Error: Spec is missing.", "phase": "Structure", "user_feedback": None}
 
-    system_prompt = load_prompt("structure_generator")
-    
-    # [REQ-FUN-020]
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("user", f"以下の記事要求仕様書に基づいて、記事構成案を作成してください。\n\n記事要求仕様書:\n{spec_doc}")
-    ])
-    
-    chain = prompt | llm | StrOutputParser()
-    structure_doc = chain.invoke({})
+    structure_doc = run_agent_chain(
+        llm=llm,
+        system_prompt_name="structure_generator",
+        user_prompt_template="以下の記事要求仕様書に基づいて、記事構成案を作成してください。\n\n記事要求仕様書:\n{spec_doc}",
+        input_vars={"spec_doc": spec_doc}
+    )
     
     return {
         "structure_doc": structure_doc,
@@ -45,16 +38,16 @@ def _generate_structure(spec_doc: Optional[str]) -> BlogSessionState:
     }
 
 def _refine_structure(spec_doc: Optional[str], current_structure: str, feedback: str) -> BlogSessionState:
-    system_prompt = load_prompt("structure_generator")
-    
-    # [REQ-FUN-021]
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("user", f"以下の仕様書、現在の構成案、およびユーザーフィードバックに基づいて、記事構成案を修正してください。\n\n記事要求仕様書:\n{spec_doc}\n\n現在の性案:\n{current_structure}\n\nユーザーフィードバック:\n{feedback}")
-    ])
-
-    chain = prompt | llm | StrOutputParser()
-    updated_structure = chain.invoke({})
+    updated_structure = run_agent_chain(
+        llm=llm,
+        system_prompt_name="structure_generator",
+        user_prompt_template="以下の仕様書、現在の構成案、およびユーザーフィードバックに基づいて、記事構成案を修正してください。\n\n記事要求仕様書:\n{spec_doc}\n\n現在の性案:\n{current_structure}\n\nユーザーフィードバック:\n{feedback}",
+        input_vars={
+            "spec_doc": spec_doc,
+            "current_structure": current_structure,
+            "feedback": feedback
+        }
+    )
 
     return {
         "structure_doc": updated_structure,
