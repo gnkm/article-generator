@@ -11,6 +11,7 @@ dependencies = [
     "langgraph>=1.0.5",
     "pydantic>=2.12.5",
     "python-dotenv>=1.2.1",
+    "python-engineio<4.11.0",
 ]
 
 [tool.uv]
